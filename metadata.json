@@ -1,0 +1,6 @@
+{
+  "name": "UNKEINMO",
+  "description": "Plataforma de gestión inmobiliaria de vanguardia ofrecida por el estudio de diseño Unke con paneles de control intuitivos, alertas activas y organización impecable.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_-]+$');
+    }
+
+    // --- User profile rules ---
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(userId) 
+        && request.resource.data.uid == userId
+        && request.resource.data.email is string
+        && request.resource.data.name is string;
+      allow update: if isSignedIn() && isOwner(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.email == resource.data.email;
+      allow delete: if false;
+    }
+
+    // --- Properties rules ---
+    match /properties/{propertyId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(propertyId)
+        && request.resource.data.address is string && request.resource.data.address.size() <= 200
+        && request.resource.data.category is string && request.resource.data.category.size() <= 50
+        && request.resource.data.operation is string && request.resource.data.operation.size() <= 50
+        && request.resource.data.status is string && request.resource.data.status.size() <= 50
+        && request.resource.data.price is number
+        && request.resource.data.currency is string && request.resource.data.currency.size() <= 10
+        && request.resource.data.ownerId is string && request.resource.data.ownerId.size() <= 100
+        && request.resource.data.agentId == request.auth.uid;
+      allow update: if isSignedIn()
+        && (!("agentId" in resource.data) || request.resource.data.agentId == resource.data.agentId);
+      allow delete: if isSignedIn() && (!("agentId" in resource.data) || resource.data.agentId == request.auth.uid);
+    }
+
+    // --- Clients rules ---
+    match /clients/{clientId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(clientId)
+        && request.resource.data.name is string && request.resource.data.name.size() <= 100
+        && request.resource.data.email is string && request.resource.data.email.size() <= 100
+        && request.resource.data.phone is string && request.resource.data.phone.size() <= 30
+        && request.resource.data.role is string && request.resource.data.role.size() <= 50
+        && request.resource.data.valoration is string && request.resource.data.valoration.size() <= 50
+        && request.resource.data.activeContracts is number
+        && request.resource.data.agentId == request.auth.uid;
+      allow update: if isSignedIn()
+        && (!("agentId" in resource.data) || request.resource.data.agentId == resource.data.agentId);
+      allow delete: if isSignedIn() && (!("agentId" in resource.data) || resource.data.agentId == request.auth.uid);
+    }
+
+    // --- Visits rules ---
+    match /visits/{visitId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(visitId)
+        && request.resource.data.propertyId is string && request.resource.data.propertyId.size() <= 100
+        && request.resource.data.clientId is string && request.resource.data.clientId.size() <= 100
+        && request.resource.data.date is string && request.resource.data.date.size() <= 100
+        && request.resource.data.status is string && request.resource.data.status.size() <= 50
+        && request.resource.data.agentId == request.auth.uid;
+      allow update: if isSignedIn()
+        && (!("agentId" in resource.data) || request.resource.data.agentId == resource.data.agentId);
+      allow delete: if isSignedIn() && (!("agentId" in resource.data) || resource.data.agentId == request.auth.uid);
+    }
+
+    // --- Alerts rules ---
+    match /alerts/{alertId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(alertId)
+        && request.resource.data.title is string && request.resource.data.title.size() <= 150
+        && request.resource.data.description is string && request.resource.data.description.size() <= 300
+        && request.resource.data.level is string && request.resource.data.level.size() <= 50
+        && request.resource.data.resolved is bool
+        && request.resource.data.agentId == request.auth.uid;
+      allow update: if isSignedIn()
+        && (!("agentId" in resource.data) || request.resource.data.agentId == resource.data.agentId);
+      allow delete: if isSignedIn() && (!("agentId" in resource.data) || resource.data.agentId == request.auth.uid);
+    }
+  }
+}

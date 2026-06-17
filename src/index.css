@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    @apply font-sans antialiased bg-[#F5F5F7] text-[#1D1D1F];
+    /* Apple-style off-white background and deep charcoal text */
+  }
+
+  /* Custom subtle scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-black/10 rounded-full border-[2px] border-solid border-transparent bg-clip-padding backdrop-blur-3xl;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-black/20;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-2xl border border-white/60 shadow-[0_8px_30px_rgb(0,0,0,0.04)];
+  }
+  .glass-sidebar {
+    @apply bg-white/50 backdrop-blur-3xl border-r border-white/50 shadow-[4px_0_24px_rgba(0,0,0,0.02)];
+  }
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-xl border border-white/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)];
+  }
+}
+
+

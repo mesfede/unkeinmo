@@ -1,0 +1,104 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "User profile inside the agency",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email", "createdAt"]
+    },
+    "property": {
+      "title": "Property",
+      "description": "Real estate properties managed by agents",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "address": { "type": "string" },
+        "category": { "type": "string" },
+        "operation": { "type": "string" },
+        "status": { "type": "string" },
+        "price": { "type": "number" },
+        "currency": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "features": { "type": "object" },
+        "auditReady": { "type": "boolean" },
+        "agentId": { "type": "string" }
+      },
+      "required": ["id", "address", "category", "operation", "status", "price", "currency", "ownerId", "auditReady", "agentId"]
+    },
+    "client": {
+      "title": "Client",
+      "description": "Contacts that are clients (owners, tenants, prospects)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "role": { "type": "string" },
+        "valoration": { "type": "string" },
+        "activeContracts": { "type": "number" },
+        "agentId": { "type": "string" }
+      },
+      "required": ["id", "name", "email", "phone", "role", "valoration", "activeContracts", "agentId"]
+    },
+    "visit": {
+      "title": "Visit",
+      "description": "Calendar meetings and visits booked for properties",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "propertyId": { "type": "string" },
+        "clientId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string" },
+        "agentId": { "type": "string" }
+      },
+      "required": ["id", "propertyId", "clientId", "date", "status", "agentId"]
+    },
+    "alert": {
+      "title": "Alert",
+      "description": "Operational warnings and system alerts for agents",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "level": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "resolved": { "type": "boolean" },
+        "actionRequired": { "type": "string" },
+        "agentId": { "type": "string" }
+      },
+      "required": ["id", "title", "description", "level", "timestamp", "resolved", "agentId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "A collection containing user accounts of the real estate agency"
+    },
+    "/properties/{propertyId}": {
+      "schema": "property",
+      "description": "A collection containing properties details managed in the system"
+    },
+    "/clients/{clientId}": {
+      "schema": "client",
+      "description": "A collection containing clients lists (propietarios, inquilinos, prospectos)"
+    },
+    "/visits/{visitId}": {
+      "schema": "visit",
+      "description": "A collection representing showings and calendar events"
+    },
+    "/alerts/{alertId}": {
+      "schema": "alert",
+      "description": "A collection representing active and resolved notifications"
+    }
+  }
+}
