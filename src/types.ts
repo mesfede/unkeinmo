@@ -44,10 +44,13 @@ export interface Client {
 
 export interface Visit {
   id: string;
-  propertyId: string;
-  clientId: string;
-  date: Date;
+  propertyId?: string;
+  clientId?: string;
+  date: Date | string;
   status: "Pendiente" | "Completada" | "Cancelada";
+  type?: "Visita" | "Firma de Contrato" | "Reunión" | "Llamada" | "Tasación" | "Otro";
+  title?: string;
+  notes?: string;
 }
 
 export interface FinancialState {
@@ -66,4 +69,15 @@ export interface AgentAlert {
   resolved: boolean;
   level: "Urgente" | "Alerta" | "Aviso" | "Pendiente";
   actionRequired?: string;
+}
+
+export interface SupportMessage {
+  id: string;
+  chatId: string; // The user UID of the non-admin user
+  senderId: string;
+  senderName: string;
+  senderEmail: string;
+  text: string;
+  timestamp: string;
+  isFromAdmin: boolean;
 }

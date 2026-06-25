@@ -29,6 +29,7 @@ export function BrandingSettingsModal({ isOpen, onClose, userProfile, uid }: Bra
   const [dragActive, setDragActive] = useState(false);
   const [success, setSuccess] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [error, setError] = useState('');
 
   // Sync state with loaded user profile when modal opens
   useEffect(() => {
@@ -44,11 +45,11 @@ export function BrandingSettingsModal({ isOpen, onClose, userProfile, uid }: Bra
   // Handle image conversion to Base64
   const handleFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert('Por favor selecciona un archivo de imagen válido (PNG, JPEG, SVG).');
+      setError('Por favor selecciona un archivo de imagen válido (PNG, JPEG, SVG).');
       return;
     }
     if (file.size > 800 * 1024) { // 800KB max to avoid Firestore document limits
-      alert('Para un rendimiento óptimo de la aplicación, el logo debe ser menor a 800 KB.');
+      setError('Para un rendimiento óptimo de la aplicación, el logo debe ser menor a 800 KB.');
       return;
     }
 
@@ -93,7 +94,7 @@ export function BrandingSettingsModal({ isOpen, onClose, userProfile, uid }: Bra
 
     try {
       await updateUserProfileInFirebase(uid, {
-        agencyName: agencyName.trim() || 'Unkeinmo',
+        agencyName: 'UNKEINMO',
         brandColor: selectedColor,
         logoUrl: logoUrl,
       });
@@ -104,7 +105,7 @@ export function BrandingSettingsModal({ isOpen, onClose, userProfile, uid }: Bra
       }, 1500);
     } catch (err) {
       console.error(err);
-      alert('Error al guardar los cambios en la base de datos.');
+      setError('Error al guardar los cambios en la base de datos.');
     } finally {
       setSubmitting(false);
     }
@@ -118,16 +119,7 @@ export function BrandingSettingsModal({ isOpen, onClose, userProfile, uid }: Bra
     setSubmitting(true);
     setShowResetConfirm(false);
     try {
-      const currentUserEmail = userProfile?.email || '';
-      let defaultAgencyName = 'Unkeinmo';
-      
-      // Determine the true original name based on the user handle
-      if (currentUserEmail.toLowerCase() === 'unkeinmomef@unkeinmo.com') {
-        defaultAgencyName = 'UNKEINMO MEF';
-      } else if (currentUserEmail.toLowerCase().endsWith('@unkeinmo.com')) {
-        const userHandle = currentUserEmail.split('@')[0];
-        defaultAgencyName = userHandle.toUpperCase() + ' INMOBILIARIA';
-      }
+      const defaultAgencyName = 'UNKEINMO';
 
       await updateUserProfileInFirebase(uid, {
         agencyName: defaultAgencyName,
@@ -142,7 +134,7 @@ export function BrandingSettingsModal({ isOpen, onClose, userProfile, uid }: Bra
       setTimeout(() => setSuccess(false), 1500);
     } catch (err) {
       console.error(err);
-      alert('Error al restablecer los valores prederminados.');
+      setError('Error al restablecer los valores prederminados.');
     } finally {
       setSubmitting(false);
     }
@@ -197,20 +189,19 @@ export function BrandingSettingsModal({ isOpen, onClose, userProfile, uid }: Bra
           <form onSubmit={handleSave} className="space-y-5">
             {/* Agency Name */}
             <div>
-              <label className="block text-xs font-bold text-[#86868B] uppercase tracking-wider mb-2 ml-1">Nombre Comercial de la Inmobiliaria</label>
+              <label className="block text-xs font-bold text-[#86868B] uppercase tracking-wider mb-2 ml-1">Nombre Comercial (Fijo)</label>
               <div className="relative">
                 <Building size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <input 
                   type="text"
-                  value={agencyName}
-                  onChange={(e) => setAgencyName(e.target.value)}
-                  placeholder="Ej: MEF Propiedades"
-                  maxLength={24}
-                  className="w-full pl-10 pr-4 py-2.5 bg-zinc-50 rounded-xl text-sm border border-black/5 outline-none focus:ring-2 focus:bg-white font-semibold transition-all"
-                  style={{ '--tw-ring-color': selectedColor } as any}
-                  required
+                  value="UNKEINMO"
+                  disabled
+                  className="w-full pl-10 pr-4 py-2.5 bg-zinc-100 rounded-xl text-sm border border-black/5 outline-none font-bold text-zinc-500 cursor-not-allowed transition-all"
                 />
               </div>
+              <p className="text-[10px] text-[#2E847A] font-semibold mt-1.5 ml-1">
+                La aplicación está configurada de forma permanente como <strong className="font-bold">UNKEINMO</strong> (integración de Unke + Inmobiliaria).
+              </p>
             </div>
 
             {/* Brand Primary Color Selection */}
@@ -279,6 +270,13 @@ export function BrandingSettingsModal({ isOpen, onClose, userProfile, uid }: Bra
                 )}
               </div>
             </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="bg-red-50 text-red-600 text-[11px] font-bold px-3 py-2 rounded-lg border border-red-200">
+                ⚠️ {error}
+              </div>
+            )}
 
             {/* Modal Actions */}
             <div className="flex items-center gap-3 pt-2">

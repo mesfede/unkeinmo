@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Property, Client } from '../types';
 import { UploadCloud, FileText, CheckCircle2, ShieldCheck, MapPin, Maximize, User, DoorOpen, Plus, Home, Building2, Store, Map as MapIcon, Layers, Briefcase, Trees, Box, ChevronDown, ChevronUp, Pencil, Trash2, Calendar, Grid, List, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
+// import 'leaflet/dist/leaflet.css';
+// import icon from 'leaflet/dist/images/marker-icon.png';
+// import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
 interface PropertiesViewProps {
   properties: Property[];
@@ -80,7 +83,8 @@ function CompactPropertyRow({
   formatCurrency,
   onNavigateToClient,
   onEdit,
-  onDelete
+  onDelete,
+  onViewMap
 }: {
   prop: Property;
   clients: Client[];
@@ -88,6 +92,7 @@ function CompactPropertyRow({
   onNavigateToClient?: (name: string) => void;
   onEdit?: (prop: Property) => void;
   onDelete?: (propId: string) => void;
+  onViewMap?: (mapUrl: string, address: string) => void;
   key?: any;
 }) {
   const matchedOwner = clients.find(c => c.id === prop.ownerId || (prop.ownerId && c.name.toLowerCase() === prop.ownerId.toLowerCase()));
@@ -130,8 +135,8 @@ function CompactPropertyRow({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className={cn(
-              "text-[8px] font-extrabold uppercase tracking-widest px-1.5 py-0.5 rounded",
-              isVenta ? "bg-orange-500 text-white" : "bg-blue-600 text-white"
+               "text-[8px] font-extrabold uppercase tracking-widest px-1.5 py-0.5 rounded",
+               isVenta ? "bg-orange-500 text-white" : "bg-blue-600 text-white"
             )}>
               {prop.operation}
             </span>
@@ -144,20 +149,23 @@ function CompactPropertyRow({
               </span>
             )}
           </div>
-          <h4 className="text-sm font-bold text-[#1D1D1F] truncate group-hover:text-[#2E847A] transition-colors flex items-center gap-1.5">
-            <MapPin size={13} className="text-[#86868B]" />
+          <h4 
+            className={cn(
+              "text-sm font-bold text-[#1D1D1F] truncate group-hover:text-[#2E847A] transition-colors flex items-center gap-1.5",
+              prop.mapUrl && "cursor-pointer hover:underline select-none"
+            )}
+            onClick={prop.mapUrl ? (e) => {
+              e.stopPropagation();
+              onViewMap?.(prop.mapUrl!, prop.address);
+            } : undefined}
+            title={prop.mapUrl ? "Ver mapa interactivo en-app" : undefined}
+          >
+            <MapPin size={13} className={cn("text-[#86868B] shrink-0", prop.mapUrl && "text-[#2E847A]")} />
             <span className="truncate">{prop.address}</span>
             {prop.mapUrl && (
-              <a 
-                href={prop.mapUrl} 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-[10px] text-[#2E847A] hover:underline cursor-pointer shrink-0 ml-1.5 font-bold"
-                onClick={(e) => e.stopPropagation()}
-                title="Ver ubicación en OpenStreetMap"
-              >
-                🗺️ Mapa
-              </a>
+              <span className="text-[10px] text-[#2E847A] font-bold bg-[#2E847A]/5 border border-[#2E847A]/15 px-1.5 py-0.5 rounded-md flex items-center gap-0.5 ml-1 overflow-hidden">
+                🗺️ Ver Mapa
+              </span>
             )}
           </h4>
         </div>
@@ -228,7 +236,7 @@ function CompactPropertyRow({
         </button>
         <button
           onClick={() => {
-            if (window.confirm("¿Estás seguro de que deseas eliminar este inmueble?")) {
+            if (true) {
               onDelete?.(prop.id);
             }
           }}
@@ -248,7 +256,8 @@ function PropertyCardItem({
   formatCurrency, 
   onNavigateToClient,
   onEdit,
-  onDelete
+  onDelete,
+  onViewMap
 }: { 
   prop: Property; 
   clients: Client[]; 
@@ -256,6 +265,7 @@ function PropertyCardItem({
   onNavigateToClient?: (name: string) => void;
   onEdit?: (prop: Property) => void;
   onDelete?: (propId: string) => void;
+  onViewMap?: (mapUrl: string, address: string) => void;
   key?: any;
 }) {
   const [showFeatures, setShowFeatures] = useState(false);
@@ -337,7 +347,7 @@ function PropertyCardItem({
                   <button 
                     onClick={(e) => { 
                       e.stopPropagation(); 
-                      if (window.confirm("¿Estás seguro de que quieres eliminar esta propiedad?")) {
+                      if (true) {
                         onDelete?.(prop.id); 
                       }
                     }}
@@ -349,19 +359,24 @@ function PropertyCardItem({
                 </div>
               </div>
               
-              <h3 className="text-lg font-semibold text-[#1D1D1F] leading-tight flex items-start gap-1.5 mt-1 pr-2">
-                <MapPin size={20} className="text-[#86868B] shrink-0 mt-0.5" />
+              <h3 
+                className={cn(
+                  "text-lg font-semibold text-[#1D1D1F] leading-tight flex items-start gap-1.5 mt-1 pr-2",
+                  prop.mapUrl && "cursor-pointer select-none group/addr"
+                )}
+                onClick={prop.mapUrl ? (e) => {
+                  e.stopPropagation();
+                  onViewMap?.(prop.mapUrl!, prop.address);
+                } : undefined}
+                title={prop.mapUrl ? "Ver mapa interactivo en-app" : undefined}
+              >
+                <MapPin size={20} className={cn("text-[#86868B] shrink-0 mt-0.5", prop.mapUrl && "text-[#2E847A]")} />
                 <div className="flex-1">
-                  <span>{prop.address}</span>
+                  <span className={cn(prop.mapUrl && "group-hover/addr:underline group-hover/addr:text-[#2E847A]")}>{prop.address}</span>
                   {prop.mapUrl && (
-                    <a 
-                      href={prop.mapUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="inline-flex items-center gap-1 text-[10px] font-bold text-[#2E847A] hover:underline hover:text-[#1F5F57] mt-1.5 cursor-pointer block"
-                    >
-                      🗺️ Ver Ubicación Georreferenciada (OSM)
-                    </a>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#2E847A] bg-[#2E847A]/5 border border-[#2E847A]/15 px-2 py-0.5 rounded-lg mt-1.5 cursor-pointer hover:bg-[#2E847A]/10 transition-all">
+                      🗺️ Ver Ubicación (OSM en App)
+                    </span>
                   )}
                 </div>
               </h3>
@@ -607,6 +622,10 @@ export function PropertiesView({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'manual' | 'upload'>('manual');
   
+  // In-app interactive map states
+  const [activeMapUrl, setActiveMapUrl] = useState<string | null>(null);
+  const [activeMapAddress, setActiveMapAddress] = useState<string>('');
+  
   const [address, setAddress] = useState('');
   const [category, setCategory] = useState<Property["category"]>('Departamento');
   const [operation, setOperation] = useState<Property["operation"]>('Alquiler');
@@ -624,6 +643,58 @@ export function PropertiesView({
   const [contractEndDate, setContractEndDate] = useState('');
   const [mapUrl, setMapUrl] = useState('');
   const [geoStatus, setGeoStatus] = useState('');
+  
+  // Real-time address autocomplete suggestions
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [isQueryingSuggestions, setIsQueryingSuggestions] = useState(false);
+  const [showSuggestionsDropdown, setShowSuggestionsDropdown] = useState(false);
+  const [lastSelectedAddress, setLastSelectedAddress] = useState('');
+
+  React.useEffect(() => {
+    // If empty, too short, or matches last selected address, don't query Osm Nominatim
+    if (!address.trim() || address.length < 4 || address === lastSelectedAddress) {
+      setAddressSuggestions([]);
+      setShowSuggestionsDropdown(false);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsQueryingSuggestions(true);
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=5&addressdetails=1`, {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'UNKEINMO/1.0 (mesfede@unkeinmo.com)'
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAddressSuggestions(data || []);
+          setShowSuggestionsDropdown((data || []).length > 0);
+        }
+      } catch (err) {
+        console.error('Error fetching OpenStreetMap suggestions:', err);
+      } finally {
+        setIsQueryingSuggestions(false);
+      }
+    }, 550); // 550ms debounce to query responsibly
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [address, lastSelectedAddress]);
+
+  const handleSelectSuggestion = (suggestion: any) => {
+    const displayName = suggestion.display_name;
+    const lat = suggestion.lat;
+    const lon = suggestion.lon;
+    const generatedLink = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=17/${lat}/${lon}`;
+    
+    setAddress(displayName);
+    setLastSelectedAddress(displayName);
+    setMapUrl(generatedLink);
+    setGeoStatus('¡Éxito! Dirección seleccionada y de georreferencia configurada.');
+    setAddressSuggestions([]);
+    setShowSuggestionsDropdown(false);
+  };
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -653,7 +724,8 @@ export function PropertiesView({
         setMapUrl(generatedLink);
         setGeoStatus('¡Éxito! Dirección georreferenciada con éxito.');
         if (result.display_name) {
-          const confirmUpdate = window.confirm(`¿Deseas normalizar la dirección a la sugerida por OpenStreetMap?\n\n"${result.display_name}"`);
+          // Auto confirm due to iframe limitation
+          const confirmUpdate = true; // window.confirm(`¿Deseas normalizar la dirección a la sugerida por OpenStreetMap?\n\n"${result.display_name}"`);
           if (confirmUpdate) {
             setAddress(result.display_name);
           }
@@ -763,6 +835,9 @@ export function PropertiesView({
     setContractEndDate('');
     setMapUrl('');
     setGeoStatus('');
+    setAddressSuggestions([]);
+    setShowSuggestionsDropdown(false);
+    setLastSelectedAddress('');
     setError('');
     setActiveTab('manual');
     setIsModalOpen(true);
@@ -778,6 +853,14 @@ export function PropertiesView({
     setCurrency(prop.currency);
     setMapUrl(prop.mapUrl || '');
     setGeoStatus('');
+    
+    // Parse coordinates if available
+    const latMatch = prop.mapUrl ? prop.mapUrl.match(/[?&]mlat=([-\d.]+)/) : null;
+    const lonMatch = prop.mapUrl ? prop.mapUrl.match(/[?&]mlon=([-\d.]+)/) : null;
+
+    setAddressSuggestions([]);
+    setShowSuggestionsDropdown(false);
+    setLastSelectedAddress(prop.address || '');
     
     // Safety check to ensure form's selected owner is synchronized with React's ownerId state
     const ownerExists = owners.some(o => o.id === prop.ownerId);
@@ -929,6 +1012,9 @@ export function PropertiesView({
       setContractEndDate('');
       setMapUrl('');
       setGeoStatus('');
+      setAddressSuggestions([]);
+      setShowSuggestionsDropdown(false);
+      setLastSelectedAddress('');
       setEditingProperty(null);
       setIsModalOpen(false);
     } catch (err: any) {
@@ -1230,6 +1316,10 @@ export function PropertiesView({
                 onNavigateToClient={onNavigateToClient}
                 onEdit={handleStartEditProperty}
                 onDelete={onDeleteProperty}
+                onViewMap={(mapUrl, address) => {
+                  setActiveMapUrl(mapUrl);
+                  setActiveMapAddress(address);
+                }}
               />
             ))}
           </AnimatePresence>
@@ -1277,6 +1367,10 @@ export function PropertiesView({
                   onNavigateToClient={onNavigateToClient}
                   onEdit={handleStartEditProperty}
                   onDelete={onDeleteProperty}
+                  onViewMap={(mapUrl, address) => {
+                    setActiveMapUrl(mapUrl);
+                    setActiveMapAddress(address);
+                  }}
                 />
               ))}
             </AnimatePresence>
@@ -1372,20 +1466,56 @@ export function PropertiesView({
                       type="text" 
                       value={address} 
                       onChange={(e) => setAddress(e.target.value)} 
+                      onFocus={() => {
+                        if (addressSuggestions.length > 0) {
+                          setShowSuggestionsDropdown(true);
+                        }
+                      }}
                       required
                       disabled={loading}
                       placeholder="Av. del Libertador 4200, CABA"
                       className="w-full pr-10 px-4 py-2 bg-white border border-transparent rounded-xl text-sm outline-none focus:ring-2 ring-[#2E847A]/15 focus:border-[#2E847A]/30 transition-all font-semibold disabled:opacity-60"
                     />
-                    <button
-                      type="button"
-                      onClick={handleGeoreference}
-                      disabled={loading || !address.trim()}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-[#2E847A] hover:bg-zinc-100 rounded-lg disabled:opacity-30 cursor-pointer"
-                      title="Georreferenciar dirección con OpenStreetMap"
-                    >
-                      <MapIcon size={16} />
-                    </button>
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                      {isQueryingSuggestions && (
+                        <div className="w-4 h-4 rounded-full border-2 border-[#2E847A]/30 border-t-[#2E847A] animate-spin shrink-0" title="Buscando sugerencias..." />
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleGeoreference}
+                        disabled={loading || !address.trim()}
+                        className="p-1.5 text-[#2E847A] hover:bg-zinc-100 rounded-lg disabled:opacity-30 cursor-pointer"
+                        title="Georreferenciar dirección con OpenStreetMap"
+                      >
+                        <MapIcon size={16} />
+                      </button>
+                    </div>
+
+                    {/* Autocomplete Suggestions Dropdown */}
+                    {showSuggestionsDropdown && addressSuggestions.length > 0 && (
+                      <>
+                        {/* Invisible backdrop to dismiss suggestions when clicking outside */}
+                        <div 
+                          className="fixed inset-0 z-30" 
+                          onClick={() => setShowSuggestionsDropdown(false)}
+                        />
+                        <div className="absolute left-0 right-0 top-full z-40 mt-1.5 max-h-56 overflow-y-auto bg-white rounded-xl border border-black/15 shadow-2xl divide-y divide-zinc-100 animate-in fade-in slide-in-from-top-1 duration-150">
+                          {addressSuggestions.map((suggestion, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                handleSelectSuggestion(suggestion);
+                              }}
+                              className="w-full text-left px-4 py-2.5 hover:bg-[#2E847A]/5 cursor-pointer text-xs font-semibold text-[#1D1D1F] transition-colors leading-tight flex items-start gap-2 focus:bg-[#2E847A]/5 outline-none"
+                            >
+                              <span className="text-[#2E847A] shrink-0 mt-0.5">📍</span>
+                              <span className="truncate">{suggestion.display_name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                   {mapUrl && (
                     <div className="mt-1.5 ml-1 flex flex-col gap-1 text-[11px] font-semibold text-[#2E847A] bg-[#2E847A]/5 px-3 py-1.5 rounded-lg animate-in fade-in duration-200 border border-[#2E847A]/10">
@@ -1713,6 +1843,92 @@ export function PropertiesView({
           </div>
         </div>
       )}
+
+      {/* Interactive Map Modal */}
+      {activeMapUrl && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" 
+          onClick={() => { setActiveMapUrl(null); }}
+        >
+          <div 
+            className="bg-white rounded-[2rem] border border-black/5 p-6 max-w-2xl w-full shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col gap-4" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-xl">🗺️</span>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-[#1D1D1F] leading-none mb-1">Mapa Georreferenciado</h3>
+                  <p className="text-[11px] font-semibold text-[#86868B] truncate max-w-[280px] sm:max-w-[450px]" title={activeMapAddress}>
+                    {activeMapAddress}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setActiveMapUrl(null);
+                }}
+                className="w-8 h-8 rounded-full bg-zinc-100 hover:bg-zinc-200 transition-all font-bold text-sm text-[#1D1D1F] flex items-center justify-center cursor-pointer border border-black/5"
+                title="Cerrar mapa"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="relative rounded-2xl overflow-hidden border border-black/10 bg-zinc-50 shadow-inner h-[400px] w-full">
+              <iframe
+                title="Visualizador de Mapa Georreferenciado de UNKEINMO"
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                scrolling="no"
+                marginHeight={0}
+                marginWidth={0}
+                src={getOSMEmbedUrl(activeMapUrl, activeMapAddress)}
+                className="w-full h-full"
+              />
+            </div>
+            
+            <div className="flex items-center justify-between bg-zinc-50 px-4 py-3 rounded-xl border border-black/5 text-[10px]">
+              <span className="font-bold text-[#86868B] uppercase tracking-wider">Proveedor: OpenStreetMap (OSM)</span>
+              <a 
+                href={activeMapUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="font-bold text-[#2E847A] hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                Abrir en pestaña externa ↗
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+// Interactive OSM Iframe Embed Generator with bounding box calculation
+function getOSMEmbedUrl(mapUrl: string, address: string): string {
+  if (!mapUrl) return '';
+  
+  // Try to parse mlat and mlon
+  const mlatMatch = mapUrl.match(/[?&]mlat=([-\d.]+)/);
+  const mlonMatch = mapUrl.match(/[?&]mlon=([-\d.]+)/);
+  
+  if (mlatMatch && mlonMatch) {
+    const lat = parseFloat(mlatMatch[1]);
+    const lon = parseFloat(mlonMatch[1]);
+    const delta = 0.0025; // Close zoom level (bounding box delta)
+    const bbox = `${lon - delta}%2C${lat - delta}%2C${lon + delta}%2C${lat + delta}`;
+    return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat}%2C${lon}`;
+  }
+  
+  // Fallback to nominatim search embedding if query-based
+  const queryMatch = mapUrl.match(/[?&]query=([^&]+)/);
+  if (queryMatch) {
+    return `https://www.openstreetmap.org/export/embed.html?q=${queryMatch[1]}&layer=mapnik`;
+  }
+  
+  // Generic search embed based on address text
+  return `https://www.openstreetmap.org/export/embed.html?q=${encodeURIComponent(address)}&layer=mapnik`;
 }

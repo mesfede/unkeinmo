@@ -11,12 +11,33 @@ import {
   deleteField
 } from 'firebase/firestore';
 import { db, OperationType, handleFirestoreError, auth } from './firebase';
-import { Property, Client, Visit, AgentAlert, FinancialState } from '../types';
+import { Property, Client, Visit, AgentAlert, FinancialState, SupportMessage } from '../types';
 import { MOCK_PROPERTIES, MOCK_CLIENTS, MOCK_VISITS, MOCK_ALERTS } from '../data/mockData';
 
 // --- Seeding Firestore if collection is empty ---
 export async function seedDatabaseIfEmpty(agentId: string) {
   try {
+    // For MEF Trial Account (unkeinmomef@unkeinmo.com), we explicitly want a completely clean, empty database.
+    // If they logged in previously and seeded, we actively wipe those seeded mock documents, and skip seeding entirely.
+    if (auth.currentUser?.email?.toLowerCase() === 'unkeinmomef@unkeinmo.com') {
+      console.log('Skipping automatic database seeding for MEF Negocios Inmobiliarios to start with a clean empty slate.');
+      const collectionsToClean = ['properties', 'clients', 'visits', 'alerts'];
+      for (const colName of collectionsToClean) {
+        const q = query(collection(db, colName), where('agentId', '==', agentId));
+        const snapshot = await getDocs(q);
+        for (const d of snapshot.docs) {
+          const id = d.id;
+          const isMock = id.endsWith('_prop-1') || id.endsWith('_prop-2') || id.endsWith('_prop-3') || id.endsWith('_prop-4') || id.endsWith('_prop-5') ||
+                         id.includes('_client-') || id.includes('_visit-') || id.includes('_alert-');
+          if (isMock) {
+            await deleteDoc(d.ref);
+            console.log(`Deleted existing mock document ${id} from ${colName} for clean slate.`);
+          }
+        }
+      }
+      return;
+    }
+
     // We seed the properties for any authorized logged-in user so they have the sample data ready to go!
     const unique = (id: string) => `${agentId}_${id}`;
 
@@ -69,7 +90,7 @@ export async function seedDatabaseIfEmpty(agentId: string) {
           id: unique(visit.id),
           propertyId: unique(visit.propertyId),
           clientId: unique(visit.clientId),
-          date: visit.date.toISOString(), // convert Date to ISO String for Firestore safety
+          date: (visit.date instanceof Date ? visit.date.toISOString() : visit.date), // convert Date to ISO String for Firestore safety
           agentId: agentId,
         });
       }
@@ -322,7 +343,7 @@ export async function addVisitToFirebase(visit: Visit, agentId: string) {
   try {
     const data = {
       ...visit,
-      date: visit.date.toISOString(),
+      date: (visit.date instanceof Date ? visit.date.toISOString() : visit.date),
       agentId,
     };
     await setDoc(doc(db, 'visits', visit.id), sanitizeForSet(data));
@@ -336,7 +357,7 @@ export async function updateVisitInFirebase(visitId: string, updates: Partial<Vi
   try {
     const dataUpdates: any = { ...updates };
     if (updates.date) {
-      dataUpdates.date = updates.date.toISOString();
+      dataUpdates.date = (updates.date instanceof Date ? updates.date.toISOString() : updates.date);
     }
     const docRef = doc(db, 'visits', visitId);
     await updateDoc(docRef, sanitizeForUpdate(dataUpdates));
@@ -391,6 +412,15 @@ export async function deleteClientFromFirebase(clientId: string) {
   }
 }
 
+export async function deleteVisitFromFirebase(visitId: string) {
+  const path = `visits/${visitId}`;
+  try {
+    await deleteDoc(doc(db, 'visits', visitId));
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, path);
+  }
+}
+
 export async function updateOrCreateUserProfile(uid: string, name: string, email: string, additionalData: any = {}) {
   const path = `users/${uid}`;
   try {
@@ -415,4 +445,51 @@ export async function updateUserProfileInFirebase(uid: string, updates: any) {
   } catch (error) {
     handleFirestoreError(error, OperationType.UPDATE, path);
   }
+}
+
+export async function addSupportMessageToFirebase(msg: Omit<SupportMessage, 'id'>) {
+  const id = `msg-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+  const path = `support_messages/${id}`;
+  try {
+    await setDoc(doc(db, 'support_messages', id), {
+      id,
+      ...msg
+    });
+  } catch (error) {
+    handleFirestoreError(error, OperationType.CREATE, path);
+  }
+}
+
+export function syncSupportMessages(onUpdate: (msgs: SupportMessage[]) => void, onError: (err: any) => void, chatId?: string) {
+  const colRef = collection(db, 'support_messages');
+  const q = chatId 
+    ? query(colRef, where('chatId', '==', chatId)) 
+    : query(colRef);
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const msgs: SupportMessage[] = [];
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        msgs.push({
+          id: data.id,
+          chatId: data.chatId,
+          senderId: data.senderId,
+          senderName: data.senderName,
+          senderEmail: data.senderEmail,
+          text: data.text,
+          timestamp: data.timestamp,
+          isFromAdmin: !!data.isFromAdmin,
+        });
+      });
+      // Sort in-memory to prevent requiring composite Firestore indexes
+      msgs.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      onUpdate(msgs);
+    },
+    (err) => {
+      console.error('Error syncing support messages:', err);
+      onError(err);
+    }
+  );
 }

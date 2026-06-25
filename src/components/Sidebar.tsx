@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Building, Users, Calendar, LogOut, ShieldAlert, Sparkles, Settings } from 'lucide-react';
+import { LayoutDashboard, Building, Users, Calendar, LogOut, ShieldAlert, Sparkles, Settings, MessageSquare } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface SidebarProps {
@@ -21,6 +21,11 @@ export function Sidebar({
   userProfile,
   onOpenSettings
 }: SidebarProps) {
+  const isMesfedeAdmin = currentUser?.email?.toLowerCase() === 'mesfede@gmail.com' || 
+                         currentUser?.email?.toLowerCase() === 'mesfede@unkeinmo.com' || 
+                         userProfile?.email?.toLowerCase() === 'mesfede@gmail.com' || 
+                         userProfile?.email?.toLowerCase() === 'mesfede@unkeinmo.com';
+
   const navItems = [
     { id: 'dashboard', label: 'Resumen', icon: LayoutDashboard },
     { id: 'properties', label: 'Inmuebles', icon: Building },
@@ -28,11 +33,11 @@ export function Sidebar({
     { id: 'calendar', label: 'Calendario', icon: Calendar },
   ];
 
-  const userAgencyName = userProfile?.agencyName || 'Unkeinmo';
-  const isMesfedeAdmin = currentUser?.email?.toLowerCase() === 'mesfede@gmail.com' || 
-                         currentUser?.email?.toLowerCase() === 'mesfede@unkeinmo.com' || 
-                         userProfile?.email?.toLowerCase() === 'mesfede@gmail.com' || 
-                         userProfile?.email?.toLowerCase() === 'mesfede@unkeinmo.com';
+  if (isMesfedeAdmin) {
+    navItems.push({ id: 'support_chat', label: 'Soporte', icon: MessageSquare });
+  }
+
+  const userAgencyName = 'UNKEINMO';
 
   return (
     <aside className="relative z-20 w-64 h-screen glass-sidebar flex flex-col pt-8 pb-3 shrink-0">
@@ -56,17 +61,17 @@ export function Sidebar({
             <span className="font-display font-bold text-lg tracking-tight text-[#1D1D1F] leading-none mb-1 truncate" title={userAgencyName}>
               {userAgencyName}
             </span>
-            <span className="text-[9px] font-bold tracking-widest text-[#2E847A] uppercase leading-none font-display">by unke</span>
+            <span className="text-[9px] font-bold tracking-widest text-[#2E847A] uppercase leading-none font-display">unke + inmo</span>
           </div>
         </div>
         
         <button
           onClick={onOpenSettings}
           className="mt-2.5 flex items-center gap-1.5 text-[10px] font-bold text-[#2E847A] hover:opacity-80 cursor-pointer transition-all uppercase tracking-wider"
-          title="Personalizar Logo, Nombre de Inmobiliaria y Colores"
+          title="Personalizar Logo y Colores de la Identidad"
         >
           <Settings size={11} strokeWidth={2.5} />
-          <span>Personalizar Marca</span>
+          <span>Personalizar Identidad</span>
         </button>
       </div>
 

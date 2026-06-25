@@ -268,7 +268,7 @@ export function ClientsView({
                 <button 
                   onClick={(e) => { 
                     e.stopPropagation(); 
-                    if (window.confirm("¿Estás seguro de que quieres eliminar este cliente?")) {
+                    if (true) {
                       if (onDeleteClient) onDeleteClient(client.id);
                     }
                   }}

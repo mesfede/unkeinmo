@@ -9,8 +9,10 @@ import { DashboardView } from './views/DashboardView';
 import { PropertiesView } from './views/PropertiesView';
 import { ClientsView } from './views/ClientsView';
 import { CalendarView } from './views/CalendarView';
+import { SupportChatAdminView } from './views/SupportChatAdminView';
 import { LoginView } from './components/LoginView';
 import { BrandingSettingsModal } from './components/BrandingSettingsModal';
+import { SupportChatWidget } from './components/SupportChatWidget';
 import { auth, logoutUser, db } from './lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -346,10 +348,18 @@ export default function App() {
               visits={visits} 
               properties={properties} 
               clients={clients} 
+              agentId={currentUser?.uid}
+            />
+          )}
+          {currentView === 'support_chat' && (
+            <SupportChatAdminView 
+              currentUser={currentUser} 
+              userProfile={userProfile} 
             />
           )}
         </div>
       </main>
+      <SupportChatWidget currentUser={currentUser} userProfile={userProfile} />
     </div>
   );
 }

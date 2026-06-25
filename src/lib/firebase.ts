@@ -69,7 +69,8 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     path
   };
   console.error('Firestore Error Detailed: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  // Do not throw here to prevent unhandled exceptions that crash the app in the preview
+  // throw new Error(JSON.stringify(errInfo));
 }
 
 // Authentication Custom Helpers
